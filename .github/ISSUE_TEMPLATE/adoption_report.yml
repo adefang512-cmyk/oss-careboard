@@ -1,0 +1,49 @@
+name: Adoption report
+description: Share how a public repository uses OSS Careboard.
+title: "[Adoption]: "
+labels: ["adoption"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for sharing real-world usage. Only include public information
+        that you have permission to share.
+  - type: input
+    id: repository
+    attributes:
+      label: Public repository
+      description: Link to the public repository using OSS Careboard.
+      placeholder: https://github.com/owner/repository
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: How do you run OSS Careboard?
+      options:
+        - GitHub Action
+        - Command-line interface
+        - Offline snapshot rendering
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Useful outcome
+      description: What did the report help maintainers notice or decide?
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: Most important improvement
+      description: What would make the project more useful in this repository?
+    validations:
+      required: true
+  - type: checkboxes
+    id: permission
+    attributes:
+      label: Public evidence
+      options:
+        - label: The project may link to this public adoption report as usage evidence.
+          required: true

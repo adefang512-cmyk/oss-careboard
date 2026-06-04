@@ -153,6 +153,10 @@ Use either `--repo` or `--snapshot`, not both.
 See the [example report](examples/DEMO_REPORT.md) to inspect the full output
 without installing the project or accessing a real repository.
 
+Already using OSS Careboard in a public repository? Share an
+[adoption report](https://github.com/adefang512-cmyk/oss-careboard/issues/new?template=adoption_report.yml)
+so improvements can be grounded in real maintainer experience.
+
 ## Development
 
 ```bash
