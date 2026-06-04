@@ -31,6 +31,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--stale-days", type=int, default=30)
     parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=10,
+        help="Maximum GitHub API pages fetched per attention queue, default 10.",
+    )
     parser.add_argument("--language", choices=("en", "zh"), default="en")
     parser.add_argument(
         "--include-label",
@@ -58,13 +64,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
+        if args.max_pages < 1:
+            raise ValueError("max_pages must be at least one")
         if args.snapshot:
             data = json.loads(args.snapshot.read_text(encoding="utf-8"))
             snapshot = snapshot_from_dict(data)
         else:
-            snapshot = GitHubClient(token=args.token, api_url=args.api_url).fetch_snapshot(
-                args.repo
-            )
+            snapshot = GitHubClient(
+                token=args.token,
+                api_url=args.api_url,
+                max_pages=args.max_pages,
+            ).fetch_snapshot(args.repo)
 
         report = render_markdown(
             snapshot,

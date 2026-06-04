@@ -32,6 +32,8 @@ class SnapshotRoundTripTests(unittest.TestCase):
             latest_release_url="https://github.com/example/project/releases/tag/v1.0.0",
             latest_release_published_at=now,
             fetched_at=now,
+            rate_limit_remaining=42,
+            rate_limit_reset_at=now,
         )
 
         restored = snapshot_from_dict(snapshot_to_dict(snapshot))
@@ -41,4 +43,3 @@ class SnapshotRoundTripTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

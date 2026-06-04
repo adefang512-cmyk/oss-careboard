@@ -4,6 +4,21 @@ All notable changes to OSS Careboard will be documented here.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-04
+
+### Added
+
+- Explicit data coverage warnings when the GitHub API page limit truncates
+  issue or pull request analysis.
+- `+` count suffixes and "at least" language for incomplete datasets.
+- Low GitHub API rate-limit warnings with reset timestamps.
+- Configurable `--max-pages` CLI option and `max-pages` GitHub Action input.
+
+### Changed
+
+- Snapshot JSON now records pagination completeness and GitHub API rate-limit
+  metadata for transparent offline rendering.
+
 ## [0.3.0] - 2026-06-04
 
 ### Added

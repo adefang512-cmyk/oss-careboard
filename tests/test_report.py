@@ -107,6 +107,33 @@ class ReportTests(unittest.TestCase):
         self.assertNotIn("#7 Improve docs", report)
         self.assertIn("#9 Old draft", report)
 
+    def test_warns_when_pagination_limit_truncates_data(self) -> None:
+        snapshot = replace(
+            make_snapshot(),
+            issues_complete=False,
+            pull_requests_complete=False,
+        )
+
+        report = render_markdown(snapshot)
+
+        self.assertIn("| Open issues analyzed | 2+ |", report)
+        self.assertIn("| Open pull requests analyzed | 1+ |", report)
+        self.assertIn("Issue analysis reached the configured page limit", report)
+        self.assertIn("Pull request analysis reached the configured page limit", report)
+        self.assertIn("At least 2 analyzed items need attention", report)
+
+    def test_warns_when_api_rate_limit_is_low(self) -> None:
+        snapshot = make_snapshot()
+        snapshot = replace(
+            snapshot,
+            rate_limit_remaining=3,
+            rate_limit_reset_at=snapshot.fetched_at,
+        )
+
+        report = render_markdown(snapshot)
+
+        self.assertIn("Only 3 GitHub API requests remained", report)
+
     def test_renders_chinese_headings(self) -> None:
         report = render_markdown(make_snapshot(), language="zh")
 

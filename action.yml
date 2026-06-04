@@ -22,6 +22,10 @@ inputs:
     description: Maximum number of work items shown in each attention queue.
     required: false
     default: "10"
+  max-pages:
+    description: Maximum GitHub API pages fetched per attention queue.
+    required: false
+    default: "10"
   language:
     description: Report language, either en or zh.
     required: false
@@ -61,6 +65,7 @@ runs:
         INPUT_REPOSITORY: ${{ inputs.repository }}
         INPUT_STALE_DAYS: ${{ inputs['stale-days'] }}
         INPUT_LIMIT: ${{ inputs.limit }}
+        INPUT_MAX_PAGES: ${{ inputs['max-pages'] }}
         INPUT_LANGUAGE: ${{ inputs.language }}
         INPUT_INCLUDE_LABELS: ${{ inputs['include-labels'] }}
         INPUT_EXCLUDE_LABELS: ${{ inputs['exclude-labels'] }}
@@ -71,6 +76,7 @@ runs:
           --repo "$repository"
           --stale-days "$INPUT_STALE_DAYS"
           --limit "$INPUT_LIMIT"
+          --max-pages "$INPUT_MAX_PAGES"
           --language "$INPUT_LANGUAGE"
           --output "$INPUT_OUTPUT"
         )

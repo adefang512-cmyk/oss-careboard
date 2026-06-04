@@ -60,6 +60,14 @@ class CLITests(unittest.TestCase):
         self.assertIn("include any of `bug`", output.getvalue())
         self.assertIn("exclude any of `wontfix`", output.getvalue())
 
+    def test_rejects_invalid_max_pages(self) -> None:
+        error = io.StringIO()
+        with contextlib.redirect_stderr(error):
+            result = main(["--snapshot", "unused.json", "--max-pages", "0"])
+
+        self.assertEqual(result, 2)
+        self.assertIn("max_pages must be at least one", error.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

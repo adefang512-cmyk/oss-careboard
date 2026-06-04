@@ -51,6 +51,10 @@ class RepoSnapshot:
     latest_release_url: str | None
     latest_release_published_at: datetime | None
     fetched_at: datetime
+    issues_complete: bool = True
+    pull_requests_complete: bool = True
+    rate_limit_remaining: int | None = None
+    rate_limit_reset_at: datetime | None = None
 
 
 def work_item_from_dict(data: dict[str, Any]) -> WorkItem:
@@ -74,6 +78,7 @@ def snapshot_to_dict(snapshot: RepoSnapshot) -> dict[str, Any]:
     data["pushed_at"] = isoformat(snapshot.pushed_at)
     data["latest_release_published_at"] = isoformat(snapshot.latest_release_published_at)
     data["fetched_at"] = isoformat(snapshot.fetched_at)
+    data["rate_limit_reset_at"] = isoformat(snapshot.rate_limit_reset_at)
 
     for key in ("issues", "pull_requests"):
         data[key] = [
@@ -110,5 +115,12 @@ def snapshot_from_dict(data: dict[str, Any]) -> RepoSnapshot:
             data.get("latest_release_published_at")
         ),
         fetched_at=fetched_at,
+        issues_complete=bool(data.get("issues_complete", True)),
+        pull_requests_complete=bool(data.get("pull_requests_complete", True)),
+        rate_limit_remaining=(
+            int(data["rate_limit_remaining"])
+            if data.get("rate_limit_remaining") is not None
+            else None
+        ),
+        rate_limit_reset_at=parse_github_time(data.get("rate_limit_reset_at")),
     )
-

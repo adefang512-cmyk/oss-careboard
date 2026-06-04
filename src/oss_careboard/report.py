@@ -18,6 +18,10 @@ TEXT = {
         "subscribers": "Subscribers",
         "open_issues": "Open issues analyzed",
         "open_prs": "Open pull requests analyzed",
+        "coverage": "Data coverage",
+        "issues_incomplete": "Issue analysis reached the configured page limit; issue counts and queues may be incomplete.",
+        "prs_incomplete": "Pull request analysis reached the configured page limit; pull request counts and queues may be incomplete.",
+        "rate_limit_low": "Only {remaining} GitHub API requests remained at fetch time; the limit resets at {reset}.",
         "stale_issues": "Issues needing attention",
         "stale_prs": "Pull requests needing attention",
         "briefing": "Maintainer briefing",
@@ -27,6 +31,7 @@ TEXT = {
         "signals": "Key signals",
         "actions": "Suggested next actions",
         "attention": "{total} items need attention. Pull requests: {prs}; issues: {issues}.",
+        "attention_incomplete": "At least {total} analyzed items need attention. Pull requests: {prs}; issues: {issues}.",
         "attention_clear": "No items currently exceed the attention threshold.",
         "oldest": "Oldest unattended item: [#{number} {title}]({url}), idle for {days} days.",
         "label_focus": "Most common attention label: `{label}` ({count} items).",
@@ -64,6 +69,10 @@ TEXT = {
         "subscribers": "订阅者",
         "open_issues": "已分析的未关闭 Issue",
         "open_prs": "已分析的未合并 PR",
+        "coverage": "数据覆盖范围",
+        "issues_incomplete": "Issue 分析已达到配置的分页上限；Issue 数量和队列可能不完整。",
+        "prs_incomplete": "PR 分析已达到配置的分页上限；PR 数量和队列可能不完整。",
+        "rate_limit_low": "获取数据时 GitHub API 仅剩 {remaining} 次请求；额度将在 {reset} 重置。",
         "stale_issues": "需要关注的 Issue",
         "stale_prs": "需要关注的 PR",
         "briefing": "维护者综合概括",
@@ -73,6 +82,7 @@ TEXT = {
         "signals": "关键信号",
         "actions": "建议的下一步",
         "attention": "共有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
+        "attention_incomplete": "已分析数据中至少有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
         "attention_clear": "当前没有超过关注阈值的事项。",
         "oldest": "最久未处理事项：[#{number} {title}]({url})，已闲置 {days} 天。",
         "label_focus": "关注队列中最常见的标签：`{label}`（{count} 项）。",
@@ -139,6 +149,37 @@ def _filter_note(
     return [f"> **{text['filters']}:** {'; '.join(filters)}", ""]
 
 
+def _coverage_note(snapshot: RepoSnapshot, text: dict[str, str]) -> list[str]:
+    notices = []
+    if not snapshot.issues_complete:
+        notices.append(text["issues_incomplete"])
+    if not snapshot.pull_requests_complete:
+        notices.append(text["prs_incomplete"])
+    if (
+        snapshot.rate_limit_remaining is not None
+        and snapshot.rate_limit_remaining <= 10
+        and snapshot.rate_limit_reset_at is not None
+    ):
+        notices.append(
+            text["rate_limit_low"].format(
+                remaining=snapshot.rate_limit_remaining,
+                reset=snapshot.rate_limit_reset_at.isoformat(),
+            )
+        )
+    if not notices:
+        return []
+    return [
+        f"> **{text['coverage']}:**",
+        ">",
+        *(f"> - {notice}" for notice in notices),
+        "",
+    ]
+
+
+def _count_value(count: int, complete: bool) -> str:
+    return str(count) if complete else f"{count}+"
+
+
 def _item_lines(
     items: Iterable[WorkItem], now: datetime, text: dict[str, str], limit: int
 ) -> list[str]:
@@ -171,8 +212,13 @@ def _briefing_lines(
     text: dict[str, str],
 ) -> list[str]:
     attention_items = [*stale_prs, *stale_issues]
+    attention_text = (
+        text["attention"]
+        if snapshot.issues_complete and snapshot.pull_requests_complete
+        else text["attention_incomplete"]
+    )
     signals = [
-        text["attention"].format(
+        attention_text.format(
             total=len(attention_items),
             prs=len(stale_prs),
             issues=len(stale_issues),
@@ -332,9 +378,12 @@ def render_markdown(
             f"| {text['stars']} | {snapshot.stars} |",
             f"| {text['forks']} | {snapshot.forks} |",
             f"| {text['subscribers']} | {snapshot.subscribers} |",
-            f"| {text['open_issues']} | {len(snapshot.issues)} |",
-            f"| {text['open_prs']} | {len(snapshot.pull_requests)} |",
+            f"| {text['open_issues']} | "
+            f"{_count_value(len(snapshot.issues), snapshot.issues_complete)} |",
+            f"| {text['open_prs']} | "
+            f"{_count_value(len(snapshot.pull_requests), snapshot.pull_requests_complete)} |",
             "",
+            *_coverage_note(snapshot, text),
             *_filter_note(include_label_set, exclude_label_set, text),
             *_briefing_lines(snapshot, stale_issues, stale_prs, now, text),
             f"## {text['stale_prs']} ({len(stale_prs)})",

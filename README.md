@@ -43,7 +43,7 @@ The comprehensive briefing summarizes:
 Requires Python 3.10 or newer.
 
 ```bash
-python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v0.3.0
+python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v0.4.0
 oss-careboard --repo owner/repository
 ```
 
@@ -59,6 +59,14 @@ oss-careboard --repo python/cpython \
 Repeat `--include-label` or `--exclude-label` to select multiple labels.
 Matching is case-insensitive. Included items must have at least one requested
 label; an excluded label always removes an item.
+
+Large repositories are analyzed up to 10 GitHub API pages per queue by default.
+When that limit truncates data, the report clearly marks counts with `+` and
+shows a coverage warning. Increase the limit intentionally when needed:
+
+```bash
+oss-careboard --repo owner/repository --max-pages 25
+```
 
 Authenticated requests have a higher GitHub API rate limit:
 
@@ -98,6 +106,7 @@ jobs:
         with:
           token: ${{ github.token }}
           stale-days: "30"
+          max-pages: "10"
           language: en
           include-labels: "bug,security"
           exclude-labels: "duplicate,wontfix"
@@ -113,6 +122,7 @@ write to the target repository or call a paid service.
 --snapshot FILE          Render a previously saved JSON snapshot
 --stale-days DAYS        Attention threshold, default 30
 --limit COUNT            Items shown per queue, default 10
+--max-pages COUNT        GitHub API pages fetched per queue, default 10
 --language en|zh         Report language
 --include-label LABEL    Require at least one matching label; repeatable
 --exclude-label LABEL    Exclude a matching label; repeatable

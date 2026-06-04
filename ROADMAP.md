@@ -13,7 +13,7 @@ decide where to spend limited attention.
 ## 0.3
 
 - Configurable label-based queues. Delivered in `v0.3.0`.
-- Clear pagination and rate-limit notices in reports.
+- Clear pagination and rate-limit notices in reports. Delivered in `v0.4.0`.
 - More tests for GitHub Enterprise API behavior.
 - Optional contributor-response and review-latency signals.
 - More report languages contributed by the community.

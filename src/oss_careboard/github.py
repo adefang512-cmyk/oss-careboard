@@ -41,6 +41,24 @@ class GitHubClient:
         self.token = token
         self.api_url = api_url.rstrip("/")
         self.max_pages = max_pages
+        self.rate_limit_remaining: int | None = None
+        self.rate_limit_reset_at: datetime | None = None
+
+    def _capture_rate_limit(self, headers: Any) -> None:
+        remaining = headers.get("X-RateLimit-Remaining")
+        reset = headers.get("X-RateLimit-Reset")
+        try:
+            self.rate_limit_remaining = int(remaining) if remaining is not None else None
+        except (TypeError, ValueError):
+            self.rate_limit_remaining = None
+        try:
+            self.rate_limit_reset_at = (
+                datetime.fromtimestamp(int(reset), timezone.utc)
+                if reset is not None
+                else None
+            )
+        except (TypeError, ValueError, OSError):
+            self.rate_limit_reset_at = None
 
     def _request(self, url_or_path: str, allow_not_found: bool = False) -> tuple[Any, str | None]:
         url = (
@@ -50,7 +68,7 @@ class GitHubClient:
         )
         headers = {
             "Accept": "application/vnd.github+json",
-            "User-Agent": "oss-careboard/0.3",
+            "User-Agent": "oss-careboard/0.4",
             "X-GitHub-Api-Version": "2022-11-28",
         }
         if self.token:
@@ -58,6 +76,7 @@ class GitHubClient:
 
         try:
             with urlopen(Request(url, headers=headers), timeout=30) as response:
+                self._capture_rate_limit(response.headers)
                 return json.load(response), response.headers.get("Link")
         except HTTPError as error:
             if allow_not_found and error.code == 404:
@@ -67,7 +86,7 @@ class GitHubClient:
         except URLError as error:
             raise GitHubAPIError(f"Could not reach GitHub API: {error.reason}") from error
 
-    def _get_pages(self, path: str) -> list[dict[str, Any]]:
+    def _get_pages(self, path: str) -> tuple[list[dict[str, Any]], bool]:
         items: list[dict[str, Any]] = []
         next_url: str | None = path
         page = 0
@@ -78,16 +97,16 @@ class GitHubClient:
             items.extend(payload)
             next_url = parse_next_link(link_header)
             page += 1
-        return items
+        return items, next_url is None
 
     def fetch_snapshot(self, repository: str) -> RepoSnapshot:
         owner, name = validate_repository(repository)
         slug = f"{quote(owner)}/{quote(name)}"
         repo, _ = self._request(f"/repos/{slug}")
-        issues = self._get_pages(
+        issues, issues_complete = self._get_pages(
             f"/repos/{slug}/issues?state=open&sort=updated&direction=asc&per_page=100"
         )
-        pulls = self._get_pages(
+        pulls, pulls_complete = self._get_pages(
             f"/repos/{slug}/pulls?state=open&sort=updated&direction=asc&per_page=100"
         )
         release, _ = self._request(f"/repos/{slug}/releases/latest", allow_not_found=True)
@@ -119,6 +138,10 @@ class GitHubClient:
             if isinstance(release, dict)
             else None,
             fetched_at=datetime.now(timezone.utc),
+            issues_complete=issues_complete,
+            pull_requests_complete=pulls_complete,
+            rate_limit_remaining=self.rate_limit_remaining,
+            rate_limit_reset_at=self.rate_limit_reset_at,
         )
 
 
