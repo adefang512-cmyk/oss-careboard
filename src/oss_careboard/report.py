@@ -31,18 +31,24 @@ TEXT = {
         "signals": "Key signals",
         "actions": "Suggested next actions",
         "attention": "{total} items need attention. Pull requests: {prs}; issues: {issues}.",
+        "attention_one": "{total} item needs attention. Pull requests: {prs}; issues: {issues}.",
         "attention_incomplete": "At least {total} analyzed items need attention. Pull requests: {prs}; issues: {issues}.",
+        "attention_incomplete_one": "At least {total} analyzed item needs attention. Pull requests: {prs}; issues: {issues}.",
         "attention_clear": "No items currently exceed the attention threshold.",
         "oldest": "Oldest unattended item: [#{number} {title}]({url}), idle for {days} days.",
         "label_focus": "Most common attention label: `{label}` ({count} items).",
+        "label_focus_one": "Most common attention label: `{label}` ({count} item).",
         "no_label_focus": "No common label signal is available for the attention queue.",
         "release_signal": "Latest release is {days} days old.",
+        "release_signal_one": "Latest release is {days} day old.",
         "no_release_signal": "No GitHub release has been published yet.",
         "push_signal": "The default branch was last pushed {days} days ago.",
+        "push_signal_one": "The default branch was last pushed {days} day ago.",
         "unknown_push": "Last push time is unavailable.",
         "review_pr": "Review the oldest pull request first: [#{number} {title}]({url}).",
         "review_issue": "Triage the oldest issue first: [#{number} {title}]({url}).",
-        "drafts": "Check {count} stale draft pull request(s) and decide whether they need help or closure.",
+        "drafts": "Check {count} stale draft pull requests and decide whether they need help or closure.",
+        "drafts_one": "Check {count} stale draft pull request and decide whether it needs help or closure.",
         "label_action": "Batch-triage the `{label}` items to reduce context switching.",
         "release_action": "Consider preparing a release after confirming the current changes are ready.",
         "keep_cadence": "Keep the current review cadence; no stale work needs immediate attention.",
@@ -52,6 +58,7 @@ TEXT = {
         "no_release": "No published GitHub release",
         "last_push": "Last push",
         "days_ago": "{days} days ago",
+        "days_ago_one": "{days} day ago",
         "none": "Nothing in this queue.",
         "idle": "idle {days}d",
         "age": "open {days}d",
@@ -82,18 +89,24 @@ TEXT = {
         "signals": "关键信号",
         "actions": "建议的下一步",
         "attention": "共有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
+        "attention_one": "共有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
         "attention_incomplete": "已分析数据中至少有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
+        "attention_incomplete_one": "已分析数据中至少有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
         "attention_clear": "当前没有超过关注阈值的事项。",
         "oldest": "最久未处理事项：[#{number} {title}]({url})，已闲置 {days} 天。",
         "label_focus": "关注队列中最常见的标签：`{label}`（{count} 项）。",
+        "label_focus_one": "关注队列中最常见的标签：`{label}`（{count} 项）。",
         "no_label_focus": "关注队列暂无明显的标签集中趋势。",
         "release_signal": "最近一次发布距今 {days} 天。",
+        "release_signal_one": "最近一次发布距今 {days} 天。",
         "no_release_signal": "尚未发布 GitHub Release。",
         "push_signal": "默认分支最近一次推送距今 {days} 天。",
+        "push_signal_one": "默认分支最近一次推送距今 {days} 天。",
         "unknown_push": "无法获取最近推送时间。",
         "review_pr": "优先审查最久未更新的 PR：[#{number} {title}]({url})。",
         "review_issue": "优先梳理最久未更新的 Issue：[#{number} {title}]({url})。",
         "drafts": "检查 {count} 个长期未更新的草稿 PR，确认是否需要协助或关闭。",
+        "drafts_one": "检查 {count} 个长期未更新的草稿 PR，确认是否需要协助或关闭。",
         "label_action": "集中处理带有 `{label}` 标签的事项，减少上下文切换。",
         "release_action": "确认当前变更就绪后，可以考虑准备一次发布。",
         "keep_cadence": "保持当前审查节奏；暂无需要立即处理的陈旧事项。",
@@ -103,6 +116,7 @@ TEXT = {
         "no_release": "尚未发布 GitHub Release",
         "last_push": "最近推送",
         "days_ago": "{days} 天前",
+        "days_ago_one": "{days} 天前",
         "none": "此队列暂无项目。",
         "idle": "闲置 {days} 天",
         "age": "已开启 {days} 天",
@@ -180,6 +194,13 @@ def _count_value(count: int, complete: bool) -> str:
     return str(count) if complete else f"{count}+"
 
 
+def _quantity_text(
+    text: dict[str, str], key: str, quantity: int, **values: object
+) -> str:
+    selected_key = f"{key}_one" if quantity == 1 else key
+    return text[selected_key].format(**values)
+
+
 def _item_lines(
     items: Iterable[WorkItem], now: datetime, text: dict[str, str], limit: int
 ) -> list[str]:
@@ -212,13 +233,16 @@ def _briefing_lines(
     text: dict[str, str],
 ) -> list[str]:
     attention_items = [*stale_prs, *stale_issues]
-    attention_text = (
-        text["attention"]
+    attention_key = (
+        "attention"
         if snapshot.issues_complete and snapshot.pull_requests_complete
-        else text["attention_incomplete"]
+        else "attention_incomplete"
     )
     signals = [
-        attention_text.format(
+        _quantity_text(
+            text,
+            attention_key,
+            len(attention_items),
             total=len(attention_items),
             prs=len(stale_prs),
             issues=len(stale_issues),
@@ -241,19 +265,27 @@ def _briefing_lines(
     labels = Counter(label for item in attention_items for label in item.labels)
     top_label = labels.most_common(1)[0] if labels else None
     if top_label:
-        signals.append(text["label_focus"].format(label=top_label[0], count=top_label[1]))
+        signals.append(
+            _quantity_text(
+                text,
+                "label_focus",
+                top_label[1],
+                label=top_label[0],
+                count=top_label[1],
+            )
+        )
     else:
         signals.append(text["no_label_focus"])
 
     release_days = _days_since(snapshot.latest_release_published_at, now)
     signals.append(
-        text["release_signal"].format(days=release_days)
+        _quantity_text(text, "release_signal", release_days, days=release_days)
         if release_days is not None
         else text["no_release_signal"]
     )
     push_days = _days_since(snapshot.pushed_at, now)
     signals.append(
-        text["push_signal"].format(days=push_days)
+        _quantity_text(text, "push_signal", push_days, days=push_days)
         if push_days is not None
         else text["unknown_push"]
     )
@@ -279,7 +311,7 @@ def _briefing_lines(
         )
     draft_count = sum(item.draft for item in stale_prs)
     if draft_count:
-        actions.append(text["drafts"].format(count=draft_count))
+        actions.append(_quantity_text(text, "drafts", draft_count, count=draft_count))
     if top_label and top_label[1] > 1:
         actions.append(text["label_action"].format(label=top_label[0]))
     if snapshot.latest_release_published_at is None or (
@@ -353,7 +385,7 @@ def render_markdown(
         release_value = (
             f"[{snapshot.latest_release_name}]({snapshot.latest_release_url})"
             + (
-                f" ({text['days_ago'].format(days=release_days)})"
+                f" ({_quantity_text(text, 'days_ago', release_days, days=release_days)})"
                 if release_days is not None
                 else ""
             )
@@ -399,7 +431,7 @@ def render_markdown(
             f"- **{text['latest_release']}:** {release_value}",
             f"- **{text['last_push']}:** "
             + (
-                text["days_ago"].format(days=push_days)
+                _quantity_text(text, "days_ago", push_days, days=push_days)
                 if push_days is not None
                 else "unknown"
             ),

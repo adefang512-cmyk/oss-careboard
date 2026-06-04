@@ -134,6 +134,27 @@ class ReportTests(unittest.TestCase):
 
         self.assertIn("Only 3 GitHub API requests remained", report)
 
+    def test_uses_singular_english_grammar(self) -> None:
+        snapshot = make_snapshot()
+        one_day_ago = snapshot.fetched_at - timedelta(days=1)
+        snapshot = replace(
+            snapshot,
+            issues=(snapshot.issues[0],),
+            pull_requests=(),
+            pushed_at=one_day_ago,
+            latest_release_name="v1.0.0",
+            latest_release_url="https://github.com/example/project/releases/tag/v1.0.0",
+            latest_release_published_at=one_day_ago,
+        )
+
+        report = render_markdown(snapshot)
+
+        self.assertIn("1 item needs attention", report)
+        self.assertIn("`documentation` (1 item)", report)
+        self.assertIn("Latest release is 1 day old", report)
+        self.assertIn("last pushed 1 day ago", report)
+        self.assertNotIn("1 days", report)
+
     def test_renders_chinese_headings(self) -> None:
         report = render_markdown(make_snapshot(), language="zh")
 

@@ -1,0 +1,50 @@
+{
+  "repository": "example/community-project",
+  "description": "A fictional public repository used to demonstrate OSS Careboard output.",
+  "html_url": "https://github.com/example/community-project",
+  "default_branch": "main",
+  "stars": 128,
+  "forks": 19,
+  "subscribers": 14,
+  "archived": false,
+  "pushed_at": "2026-06-03T12:00:00Z",
+  "issues": [
+    {
+      "number": 42,
+      "title": "Clarify the contributor setup guide",
+      "html_url": "https://github.com/example/community-project/issues/42",
+      "created_at": "2026-02-01T09:00:00Z",
+      "updated_at": "2026-03-10T09:00:00Z",
+      "labels": ["documentation", "help wanted"],
+      "draft": false
+    },
+    {
+      "number": 51,
+      "title": "Recent question about configuration",
+      "html_url": "https://github.com/example/community-project/issues/51",
+      "created_at": "2026-06-02T09:00:00Z",
+      "updated_at": "2026-06-03T09:00:00Z",
+      "labels": ["question"],
+      "draft": false
+    }
+  ],
+  "pull_requests": [
+    {
+      "number": 48,
+      "title": "Add Windows setup notes",
+      "html_url": "https://github.com/example/community-project/pull/48",
+      "created_at": "2026-01-20T09:00:00Z",
+      "updated_at": "2026-02-20T09:00:00Z",
+      "labels": ["documentation", "help wanted"],
+      "draft": true
+    }
+  ],
+  "latest_release_name": "v1.4.0",
+  "latest_release_url": "https://github.com/example/community-project/releases/tag/v1.4.0",
+  "latest_release_published_at": "2026-01-15T09:00:00Z",
+  "fetched_at": "2026-06-04T12:00:00Z",
+  "issues_complete": true,
+  "pull_requests_complete": true,
+  "rate_limit_remaining": 2400,
+  "rate_limit_reset_at": "2026-06-04T13:00:00Z"
+}

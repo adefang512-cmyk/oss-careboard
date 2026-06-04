@@ -144,6 +144,9 @@ Use either `--repo` or `--snapshot`, not both.
   OpenAI or another model provider.
 - Snapshot JSON can contain issue and pull request titles. Review it before sharing.
 
+See the [example report](examples/DEMO_REPORT.md) to inspect the full output
+without installing the project or accessing a real repository.
+
 ## Development
 
 ```bash

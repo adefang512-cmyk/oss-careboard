@@ -9,6 +9,8 @@ All notable changes to OSS Careboard will be documented here.
 - Adoption recipes for general triage, security-focused queues, and large
   repositories.
 - Community Code of Conduct and support policy.
+- Fictional offline snapshot and generated example report for installation-free
+  evaluation.
 
 ## [0.4.0] - 2026-06-04
 
