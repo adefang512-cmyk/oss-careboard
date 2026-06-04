@@ -4,6 +4,15 @@ All notable changes to OSS Careboard will be documented here.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-04
+
+### Added
+
+- Repeatable `--include-label` and `--exclude-label` CLI filters.
+- Comma-separated `include-labels` and `exclude-labels` GitHub Action inputs.
+- Transparent filter descriptions in generated reports.
+- Tests against include, exclude, case-insensitive, and CLI filter behavior.
+
 ## [0.2.0] - 2026-06-04
 
 ### Added

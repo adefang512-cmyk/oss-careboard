@@ -21,6 +21,9 @@ TEXT = {
         "stale_issues": "Issues needing attention",
         "stale_prs": "Pull requests needing attention",
         "briefing": "Maintainer briefing",
+        "filters": "Attention filters",
+        "include_labels": "include any of {labels}",
+        "exclude_labels": "exclude any of {labels}",
         "signals": "Key signals",
         "actions": "Suggested next actions",
         "attention": "{total} items need attention. Pull requests: {prs}; issues: {issues}.",
@@ -64,6 +67,9 @@ TEXT = {
         "stale_issues": "需要关注的 Issue",
         "stale_prs": "需要关注的 PR",
         "briefing": "维护者综合概括",
+        "filters": "关注队列筛选条件",
+        "include_labels": "包含任一标签：{labels}",
+        "exclude_labels": "排除任一标签：{labels}",
         "signals": "关键信号",
         "actions": "建议的下一步",
         "attention": "共有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
@@ -105,6 +111,32 @@ def _days_since(value: datetime | None, now: datetime) -> int | None:
 
 def _escape_table(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
+
+
+def _matches_labels(
+    item: WorkItem, include_labels: frozenset[str], exclude_labels: frozenset[str]
+) -> bool:
+    labels = frozenset(label.casefold() for label in item.labels)
+    if include_labels and labels.isdisjoint(include_labels):
+        return False
+    return labels.isdisjoint(exclude_labels)
+
+
+def _filter_note(
+    include_labels: frozenset[str],
+    exclude_labels: frozenset[str],
+    text: dict[str, str],
+) -> list[str]:
+    filters = []
+    if include_labels:
+        labels = ", ".join(f"`{label}`" for label in sorted(include_labels))
+        filters.append(text["include_labels"].format(labels=labels))
+    if exclude_labels:
+        labels = ", ".join(f"`{label}`" for label in sorted(exclude_labels))
+        filters.append(text["exclude_labels"].format(labels=labels))
+    if not filters:
+        return []
+    return [f"> **{text['filters']}:** {'; '.join(filters)}", ""]
 
 
 def _item_lines(
@@ -232,6 +264,8 @@ def render_markdown(
     stale_days: int = 30,
     limit: int = 10,
     language: str = "en",
+    include_labels: Iterable[str] = (),
+    exclude_labels: Iterable[str] = (),
 ) -> str:
     if language not in TEXT:
         raise ValueError(f"unsupported language: {language}")
@@ -242,12 +276,28 @@ def render_markdown(
 
     text = TEXT[language]
     now = snapshot.fetched_at
+    include_label_set = frozenset(
+        label.strip().casefold() for label in include_labels if label.strip()
+    )
+    exclude_label_set = frozenset(
+        label.strip().casefold() for label in exclude_labels if label.strip()
+    )
     stale_issues = sorted(
-        (item for item in snapshot.issues if item.idle_days(now) >= stale_days),
+        (
+            item
+            for item in snapshot.issues
+            if item.idle_days(now) >= stale_days
+            and _matches_labels(item, include_label_set, exclude_label_set)
+        ),
         key=lambda item: item.updated_at,
     )
     stale_prs = sorted(
-        (item for item in snapshot.pull_requests if item.idle_days(now) >= stale_days),
+        (
+            item
+            for item in snapshot.pull_requests
+            if item.idle_days(now) >= stale_days
+            and _matches_labels(item, include_label_set, exclude_label_set)
+        ),
         key=lambda item: item.updated_at,
     )
 
@@ -285,6 +335,7 @@ def render_markdown(
             f"| {text['open_issues']} | {len(snapshot.issues)} |",
             f"| {text['open_prs']} | {len(snapshot.pull_requests)} |",
             "",
+            *_filter_note(include_label_set, exclude_label_set, text),
             *_briefing_lines(snapshot, stale_issues, stale_prs, now, text),
             f"## {text['stale_prs']} ({len(stale_prs)})",
             "",

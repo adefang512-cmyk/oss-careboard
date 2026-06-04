@@ -32,6 +32,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--stale-days", type=int, default=30)
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--language", choices=("en", "zh"), default="en")
+    parser.add_argument(
+        "--include-label",
+        action="append",
+        default=[],
+        help="Only include attention items with this label. Repeat for multiple labels.",
+    )
+    parser.add_argument(
+        "--exclude-label",
+        action="append",
+        default=[],
+        help="Exclude attention items with this label. Repeat for multiple labels.",
+    )
     parser.add_argument("--output", type=Path, help="Write Markdown to this path.")
     parser.add_argument("--json-output", type=Path, help="Write the raw snapshot to this path.")
     return parser
@@ -59,6 +71,8 @@ def main(argv: list[str] | None = None) -> int:
             stale_days=args.stale_days,
             limit=args.limit,
             language=args.language,
+            include_labels=args.include_label,
+            exclude_labels=args.exclude_label,
         )
         if args.output:
             _write(args.output, report)

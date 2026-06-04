@@ -1,6 +1,8 @@
 # OSS Careboard
 
 [![Tests](https://github.com/adefang512-cmyk/oss-careboard/actions/workflows/test.yml/badge.svg)](https://github.com/adefang512-cmyk/oss-careboard/actions/workflows/test.yml)
+[![Latest release](https://img.shields.io/github/v/release/adefang512-cmyk/oss-careboard)](https://github.com/adefang512-cmyk/oss-careboard/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 OSS Careboard turns GitHub repository activity into a short, actionable
 maintenance dashboard. It highlights issues and pull requests that have gone
@@ -41,9 +43,22 @@ The comprehensive briefing summarizes:
 Requires Python 3.10 or newer.
 
 ```bash
-python -m pip install .
+python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v0.3.0
 oss-careboard --repo owner/repository
 ```
+
+Focus the attention queue on relevant labels:
+
+```bash
+oss-careboard --repo python/cpython \
+  --include-label docs \
+  --exclude-label invalid \
+  --limit 5
+```
+
+Repeat `--include-label` or `--exclude-label` to select multiple labels.
+Matching is case-insensitive. Included items must have at least one requested
+label; an excluded label always removes an item.
 
 Authenticated requests have a higher GitHub API rate limit:
 
@@ -84,6 +99,8 @@ jobs:
           token: ${{ github.token }}
           stale-days: "30"
           language: en
+          include-labels: "bug,security"
+          exclude-labels: "duplicate,wontfix"
 ```
 
 The generated report is added to the workflow summary. The action does not
@@ -97,6 +114,8 @@ write to the target repository or call a paid service.
 --stale-days DAYS        Attention threshold, default 30
 --limit COUNT            Items shown per queue, default 10
 --language en|zh         Report language
+--include-label LABEL    Require at least one matching label; repeatable
+--exclude-label LABEL    Exclude a matching label; repeatable
 --output FILE            Write the Markdown report
 --json-output FILE       Save the fetched snapshot
 ```

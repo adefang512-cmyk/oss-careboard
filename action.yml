@@ -26,6 +26,14 @@ inputs:
     description: Report language, either en or zh.
     required: false
     default: en
+  include-labels:
+    description: Comma-separated labels; attention items must match at least one.
+    required: false
+    default: ""
+  exclude-labels:
+    description: Comma-separated labels to remove from attention queues.
+    required: false
+    default: ""
   output:
     description: Markdown report path.
     required: false
@@ -54,14 +62,26 @@ runs:
         INPUT_STALE_DAYS: ${{ inputs['stale-days'] }}
         INPUT_LIMIT: ${{ inputs.limit }}
         INPUT_LANGUAGE: ${{ inputs.language }}
+        INPUT_INCLUDE_LABELS: ${{ inputs['include-labels'] }}
+        INPUT_EXCLUDE_LABELS: ${{ inputs['exclude-labels'] }}
         INPUT_OUTPUT: ${{ inputs.output }}
       run: |
         repository="${INPUT_REPOSITORY:-$GITHUB_REPOSITORY}"
-        oss-careboard \
-          --repo "$repository" \
-          --stale-days "$INPUT_STALE_DAYS" \
-          --limit "$INPUT_LIMIT" \
-          --language "$INPUT_LANGUAGE" \
+        args=(
+          --repo "$repository"
+          --stale-days "$INPUT_STALE_DAYS"
+          --limit "$INPUT_LIMIT"
+          --language "$INPUT_LANGUAGE"
           --output "$INPUT_OUTPUT"
+        )
+        IFS=',' read -ra include_labels <<< "$INPUT_INCLUDE_LABELS"
+        for label in "${include_labels[@]}"; do
+          [[ -n "$label" ]] && args+=(--include-label "$label")
+        done
+        IFS=',' read -ra exclude_labels <<< "$INPUT_EXCLUDE_LABELS"
+        for label in "${exclude_labels[@]}"; do
+          [[ -n "$label" ]] && args+=(--exclude-label "$label")
+        done
+        oss-careboard "${args[@]}"
         cat "$INPUT_OUTPUT" >> "$GITHUB_STEP_SUMMARY"
         echo "report=$INPUT_OUTPUT" >> "$GITHUB_OUTPUT"

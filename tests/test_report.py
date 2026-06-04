@@ -89,6 +89,24 @@ class ReportTests(unittest.TestCase):
         self.assertIn("No items currently exceed the attention threshold.", report)
         self.assertIn("Keep the current review cadence", report)
 
+    def test_filters_attention_queue_by_label(self) -> None:
+        report = render_markdown(
+            make_snapshot(),
+            include_labels=("Documentation",),
+            exclude_labels=("wontfix",),
+        )
+
+        self.assertIn("Attention filters", report)
+        self.assertIn("include any of `documentation`", report)
+        self.assertIn("#7 Improve docs", report)
+        self.assertNotIn("#9 Old draft", report)
+
+    def test_excludes_attention_queue_by_label(self) -> None:
+        report = render_markdown(make_snapshot(), exclude_labels=("documentation",))
+
+        self.assertNotIn("#7 Improve docs", report)
+        self.assertIn("#9 Old draft", report)
+
     def test_renders_chinese_headings(self) -> None:
         report = render_markdown(make_snapshot(), language="zh")
 

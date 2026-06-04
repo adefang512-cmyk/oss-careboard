@@ -9,8 +9,8 @@ from oss_careboard.cli import main
 
 
 class CLITests(unittest.TestCase):
-    def test_renders_saved_snapshot(self) -> None:
-        snapshot = {
+    def _snapshot(self) -> dict[str, object]:
+        return {
             "repository": "example/project",
             "description": "",
             "html_url": "https://github.com/example/project",
@@ -27,9 +27,11 @@ class CLITests(unittest.TestCase):
             "latest_release_published_at": None,
             "fetched_at": "2026-06-04T00:00:00Z",
         }
+
+    def test_renders_saved_snapshot(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "snapshot.json"
-            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            path.write_text(json.dumps(self._snapshot()), encoding="utf-8")
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
                 result = main(["--snapshot", str(path)])
@@ -37,7 +39,27 @@ class CLITests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertIn("OSS Careboard", output.getvalue())
 
+    def test_accepts_repeatable_label_filters(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "snapshot.json"
+            path.write_text(json.dumps(self._snapshot()), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = main(
+                    [
+                        "--snapshot",
+                        str(path),
+                        "--include-label",
+                        "bug",
+                        "--exclude-label",
+                        "wontfix",
+                    ]
+                )
+
+        self.assertEqual(result, 0)
+        self.assertIn("include any of `bug`", output.getvalue())
+        self.assertIn("exclude any of `wontfix`", output.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
-
