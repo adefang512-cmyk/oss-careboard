@@ -115,6 +115,9 @@ jobs:
 The generated report is added to the workflow summary. The action does not
 write to the target repository or call a paid service.
 
+See the [adoption guide](docs/ADOPTION.md) for general triage, security-focused,
+and large-repository workflow recipes.
+
 ## CLI reference
 
 ```text
@@ -149,7 +152,9 @@ python -m unittest discover -s tests -v
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and the
-small-project roadmap.
+small-project roadmap. Community participation follows the
+[Code of Conduct](CODE_OF_CONDUCT.md), and help expectations are documented in
+[SUPPORT.md](SUPPORT.md).
 
 ## License
 

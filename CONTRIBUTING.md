@@ -38,3 +38,5 @@ Good first contributions include:
 - GitHub Enterprise compatibility tests.
 - Accessibility improvements to generated Markdown.
 
+Look for issues labeled `good first issue` or `help wanted`. A focused change
+with tests and documentation is easier to review than a large mixed proposal.
