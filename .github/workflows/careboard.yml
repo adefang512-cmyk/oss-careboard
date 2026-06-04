@@ -1,0 +1,21 @@
+name: Weekly Careboard
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * 1"
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  careboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./
+        with:
+          token: ${{ github.token }}
+
