@@ -1,5 +1,7 @@
 # OSS Careboard
 
+[![Tests](https://github.com/adefang512-cmyk/oss-careboard/actions/workflows/test.yml/badge.svg)](https://github.com/adefang512-cmyk/oss-careboard/actions/workflows/test.yml)
+
 OSS Careboard turns GitHub repository activity into a short, actionable
 maintenance dashboard. It highlights issues and pull requests that have gone
 quiet, shows release freshness, and works as either a zero-dependency Python
