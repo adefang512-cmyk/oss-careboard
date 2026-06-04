@@ -4,6 +4,19 @@ All notable changes to OSS Careboard will be documented here.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-04
+
+### Added
+
+- Comprehensive maintainer briefing with key signals and prioritized next steps.
+- Local analysis of stale work, label concentration, draft pull requests, release
+  freshness, and repository activity.
+- Explicit zero-cost documentation and human-review notice.
+
+### Changed
+
+- GitHub Action description now highlights the zero-cost maintenance briefing.
+
 ## [0.1.0] - 2026-06-04
 
 ### Added
@@ -15,4 +28,3 @@ All notable changes to OSS Careboard will be documented here.
 - Offline rendering from saved JSON snapshots.
 - Reusable composite GitHub Action.
 - Unit tests and community contribution files.
-

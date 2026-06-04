@@ -4,18 +4,37 @@
 
 OSS Careboard turns GitHub repository activity into a short, actionable
 maintenance dashboard. It highlights issues and pull requests that have gone
-quiet, shows release freshness, and works as either a zero-dependency Python
-CLI or a reusable GitHub Action.
+quiet, explains the strongest maintenance signals, and creates a prioritized
+next-step briefing. It works as either a zero-dependency Python CLI or a
+reusable GitHub Action.
 
-中文简介：OSS Careboard 为开源维护者自动生成维护看板，集中展示长期未更新的
-Issue、PR、最近发布与仓库活跃度。项目不依赖第三方 Python 包，可作为命令行工具
-或 GitHub Action 使用。
+中文简介：OSS Careboard 为开源维护者自动生成综合维护概括，集中展示长期未更新的
+Issue、PR、标签热点、最近发布、仓库活跃度与建议的处理顺序。项目不依赖第三方
+Python 包，可作为命令行工具或 GitHub Action 使用。
+
+## Zero cost by design
+
+OSS Careboard does not call OpenAI APIs or any other paid model API. It needs no
+API key, subscription, or payment method. All briefing logic runs locally with
+transparent rules.
+
+This public repository uses standard GitHub-hosted runners, which GitHub
+documents as free for public repositories. See [COST.md](COST.md) for the
+complete billing boundary.
 
 ## Why
 
 Maintainers often have enough raw notifications but not enough time to decide
 what needs attention first. OSS Careboard creates a calm weekly queue without
 posting comments, changing labels, or modifying repository state.
+
+The comprehensive briefing summarizes:
+
+- How many pull requests and issues exceed the attention threshold.
+- The oldest unattended item.
+- The most common label in the attention queue.
+- Release freshness and recent repository activity.
+- A prioritized, human-reviewable list of suggested next steps.
 
 ## Quick start
 
@@ -68,7 +87,7 @@ jobs:
 ```
 
 The generated report is added to the workflow summary. The action does not
-write to the target repository.
+write to the target repository or call a paid service.
 
 ## CLI reference
 
@@ -89,6 +108,8 @@ Use either `--repo` or `--snapshot`, not both.
 - Public repositories can be read without a token, subject to GitHub rate limits.
 - For private repositories, use a read-only token with permission from the owner.
 - The tool never posts comments, changes labels, merges pull requests, or scans code.
+- The comprehensive briefing is generated locally; no repository data is sent to
+  OpenAI or another model provider.
 - Snapshot JSON can contain issue and pull request titles. Review it before sharing.
 
 ## Development

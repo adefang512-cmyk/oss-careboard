@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from datetime import datetime
 from typing import Iterable
 
@@ -19,6 +20,25 @@ TEXT = {
         "open_prs": "Open pull requests analyzed",
         "stale_issues": "Issues needing attention",
         "stale_prs": "Pull requests needing attention",
+        "briefing": "Maintainer briefing",
+        "signals": "Key signals",
+        "actions": "Suggested next actions",
+        "attention": "{total} items need attention. Pull requests: {prs}; issues: {issues}.",
+        "attention_clear": "No items currently exceed the attention threshold.",
+        "oldest": "Oldest unattended item: [#{number} {title}]({url}), idle for {days} days.",
+        "label_focus": "Most common attention label: `{label}` ({count} items).",
+        "no_label_focus": "No common label signal is available for the attention queue.",
+        "release_signal": "Latest release is {days} days old.",
+        "no_release_signal": "No GitHub release has been published yet.",
+        "push_signal": "The default branch was last pushed {days} days ago.",
+        "unknown_push": "Last push time is unavailable.",
+        "review_pr": "Review the oldest pull request first: [#{number} {title}]({url}).",
+        "review_issue": "Triage the oldest issue first: [#{number} {title}]({url}).",
+        "drafts": "Check {count} stale draft pull request(s) and decide whether they need help or closure.",
+        "label_action": "Batch-triage the `{label}` items to reduce context switching.",
+        "release_action": "Consider preparing a release after confirming the current changes are ready.",
+        "keep_cadence": "Keep the current review cadence; no stale work needs immediate attention.",
+        "review_note": "This briefing is generated locally from repository metadata. Review it before acting.",
         "release": "Release freshness",
         "latest_release": "Latest release",
         "no_release": "No published GitHub release",
@@ -43,6 +63,25 @@ TEXT = {
         "open_prs": "已分析的未合并 PR",
         "stale_issues": "需要关注的 Issue",
         "stale_prs": "需要关注的 PR",
+        "briefing": "维护者综合概括",
+        "signals": "关键信号",
+        "actions": "建议的下一步",
+        "attention": "共有 {total} 个事项需要关注：{prs} 个 PR，{issues} 个 Issue。",
+        "attention_clear": "当前没有超过关注阈值的事项。",
+        "oldest": "最久未处理事项：[#{number} {title}]({url})，已闲置 {days} 天。",
+        "label_focus": "关注队列中最常见的标签：`{label}`（{count} 项）。",
+        "no_label_focus": "关注队列暂无明显的标签集中趋势。",
+        "release_signal": "最近一次发布距今 {days} 天。",
+        "no_release_signal": "尚未发布 GitHub Release。",
+        "push_signal": "默认分支最近一次推送距今 {days} 天。",
+        "unknown_push": "无法获取最近推送时间。",
+        "review_pr": "优先审查最久未更新的 PR：[#{number} {title}]({url})。",
+        "review_issue": "优先梳理最久未更新的 Issue：[#{number} {title}]({url})。",
+        "drafts": "检查 {count} 个长期未更新的草稿 PR，确认是否需要协助或关闭。",
+        "label_action": "集中处理带有 `{label}` 标签的事项，减少上下文切换。",
+        "release_action": "确认当前变更就绪后，可以考虑准备一次发布。",
+        "keep_cadence": "保持当前审查节奏；暂无需要立即处理的陈旧事项。",
+        "review_note": "此概括完全根据仓库元数据在本地生成，执行建议前请人工复核。",
         "release": "发布新鲜度",
         "latest_release": "最近发布",
         "no_release": "尚未发布 GitHub Release",
@@ -90,6 +129,102 @@ def _item_lines(
             f"({'; '.join(details)})"
         )
     return lines
+
+
+def _briefing_lines(
+    snapshot: RepoSnapshot,
+    stale_issues: list[WorkItem],
+    stale_prs: list[WorkItem],
+    now: datetime,
+    text: dict[str, str],
+) -> list[str]:
+    attention_items = [*stale_prs, *stale_issues]
+    signals = [
+        text["attention"].format(
+            total=len(attention_items),
+            prs=len(stale_prs),
+            issues=len(stale_issues),
+        )
+        if attention_items
+        else text["attention_clear"]
+    ]
+
+    oldest = min(attention_items, key=lambda item: item.updated_at, default=None)
+    if oldest:
+        signals.append(
+            text["oldest"].format(
+                number=oldest.number,
+                title=_escape_table(oldest.title),
+                url=oldest.html_url,
+                days=oldest.idle_days(now),
+            )
+        )
+
+    labels = Counter(label for item in attention_items for label in item.labels)
+    top_label = labels.most_common(1)[0] if labels else None
+    if top_label:
+        signals.append(text["label_focus"].format(label=top_label[0], count=top_label[1]))
+    else:
+        signals.append(text["no_label_focus"])
+
+    release_days = _days_since(snapshot.latest_release_published_at, now)
+    signals.append(
+        text["release_signal"].format(days=release_days)
+        if release_days is not None
+        else text["no_release_signal"]
+    )
+    push_days = _days_since(snapshot.pushed_at, now)
+    signals.append(
+        text["push_signal"].format(days=push_days)
+        if push_days is not None
+        else text["unknown_push"]
+    )
+
+    actions: list[str] = []
+    if stale_prs:
+        item = stale_prs[0]
+        actions.append(
+            text["review_pr"].format(
+                number=item.number,
+                title=_escape_table(item.title),
+                url=item.html_url,
+            )
+        )
+    if stale_issues:
+        item = stale_issues[0]
+        actions.append(
+            text["review_issue"].format(
+                number=item.number,
+                title=_escape_table(item.title),
+                url=item.html_url,
+            )
+        )
+    draft_count = sum(item.draft for item in stale_prs)
+    if draft_count:
+        actions.append(text["drafts"].format(count=draft_count))
+    if top_label and top_label[1] > 1:
+        actions.append(text["label_action"].format(label=top_label[0]))
+    if snapshot.latest_release_published_at is None or (
+        release_days is not None and release_days >= 90
+    ):
+        actions.append(text["release_action"])
+    if not actions:
+        actions.append(text["keep_cadence"])
+
+    return [
+        f"## {text['briefing']}",
+        "",
+        f"### {text['signals']}",
+        "",
+        *(f"- {signal}" for signal in signals),
+        "",
+        f"### {text['actions']}",
+        "",
+        *(f"{index}. {action}" for index, action in enumerate(actions, start=1)),
+        "",
+        f"> {text['review_note']}",
+        "",
+    ]
 
 
 def render_markdown(
@@ -150,6 +285,7 @@ def render_markdown(
             f"| {text['open_issues']} | {len(snapshot.issues)} |",
             f"| {text['open_prs']} | {len(snapshot.pull_requests)} |",
             "",
+            *_briefing_lines(snapshot, stale_issues, stale_prs, now, text),
             f"## {text['stale_prs']} ({len(stale_prs)})",
             "",
             *_item_lines(stale_prs, now, text, limit),

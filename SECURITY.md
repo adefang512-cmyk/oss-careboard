@@ -20,3 +20,6 @@ OSS Careboard only needs read access. Use the narrowest token permissions
 available, prefer short-lived tokens, and never commit a token or snapshot from
 a private repository.
 
+OSS Careboard does not use OpenAI APIs, paid model APIs, or metered third-party
+services. Do not add service credentials to a workflow unless a future feature
+clearly documents why they are needed and how costs are controlled.
