@@ -1,0 +1,67 @@
+name: OSS Careboard
+description: Generate an actionable maintenance dashboard for a GitHub repository.
+author: OSS Careboard contributors
+
+branding:
+  icon: activity
+  color: blue
+
+inputs:
+  repository:
+    description: Repository in owner/name format. Defaults to the current repository.
+    required: false
+    default: ""
+  token:
+    description: GitHub token used to read repository metadata.
+    required: true
+  stale-days:
+    description: Days without an update before an issue or pull request needs attention.
+    required: false
+    default: "30"
+  limit:
+    description: Maximum number of work items shown in each attention queue.
+    required: false
+    default: "10"
+  language:
+    description: Report language, either en or zh.
+    required: false
+    default: en
+  output:
+    description: Markdown report path.
+    required: false
+    default: CAREBOARD.md
+
+outputs:
+  report:
+    description: Path to the generated Markdown report.
+    value: ${{ steps.generate.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install OSS Careboard
+      shell: bash
+      run: python -m pip install "${{ github.action_path }}"
+    - name: Generate maintenance dashboard
+      id: generate
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        INPUT_REPOSITORY: ${{ inputs.repository }}
+        INPUT_STALE_DAYS: ${{ inputs['stale-days'] }}
+        INPUT_LIMIT: ${{ inputs.limit }}
+        INPUT_LANGUAGE: ${{ inputs.language }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+      run: |
+        repository="${INPUT_REPOSITORY:-$GITHUB_REPOSITORY}"
+        oss-careboard \
+          --repo "$repository" \
+          --stale-days "$INPUT_STALE_DAYS" \
+          --limit "$INPUT_LIMIT" \
+          --language "$INPUT_LANGUAGE" \
+          --output "$INPUT_OUTPUT"
+        cat "$INPUT_OUTPUT" >> "$GITHUB_STEP_SUMMARY"
+        echo "report=$INPUT_OUTPUT" >> "$GITHUB_OUTPUT"

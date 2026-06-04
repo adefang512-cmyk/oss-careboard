@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest a focused improvement for maintainers.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Maintainer problem
+      description: What recurring maintenance problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful solution.
+    validations:
+      required: true
+
