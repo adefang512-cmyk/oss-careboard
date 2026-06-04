@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from oss_careboard.cli import main
+from oss_careboard.cli import build_parser, main
 
 
 class CLITests(unittest.TestCase):
@@ -38,6 +38,14 @@ class CLITests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         self.assertIn("OSS Careboard", output.getvalue())
+
+    def test_prints_version_without_a_source(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit) as exit_info:
+            build_parser().parse_args(["--version"])
+
+        self.assertEqual(exit_info.exception.code, 0)
+        self.assertIn("oss-careboard 0.4.0", output.getvalue())
 
     def test_accepts_repeatable_label_filters(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

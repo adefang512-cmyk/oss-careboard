@@ -47,6 +47,12 @@ python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v
 oss-careboard --repo owner/repository
 ```
 
+The module entry point is also available:
+
+```bash
+python -m oss_careboard --repo owner/repository
+```
+
 Focus the attention queue on relevant labels:
 
 ```bash

@@ -11,6 +11,7 @@ All notable changes to OSS Careboard will be documented here.
 - Community Code of Conduct and support policy.
 - Fictional offline snapshot and generated example report for installation-free
   evaluation.
+- `python -m oss_careboard` module entry point and `--version` CLI flag.
 
 ## [0.4.0] - 2026-06-04
 

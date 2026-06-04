@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 
+from . import __version__
 from .github import GitHubAPIError, GitHubClient
 from .models import snapshot_from_dict, snapshot_to_dict
 from .report import render_markdown
@@ -16,6 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="oss-careboard",
         description="Generate an actionable maintenance dashboard for a GitHub repository.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--repo", help="GitHub repository in owner/name format.")
     source.add_argument("--snapshot", type=Path, help="Render a previously saved JSON snapshot.")
