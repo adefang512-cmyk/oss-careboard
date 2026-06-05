@@ -4,6 +4,18 @@ All notable changes to OSS Careboard will be documented here.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-05
+
+### Added
+
+- Offline GitHub Enterprise compatibility tests for custom API base URLs,
+  pagination links, rate-limit headers, and missing latest releases.
+- README guidance for `--api-url` with GitHub Enterprise Server.
+
+### Changed
+
+- Adoption recipes now reference `v0.6.0`.
+
 ## [0.5.0] - 2026-06-05
 
 ### Added

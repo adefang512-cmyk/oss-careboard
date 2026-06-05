@@ -45,7 +45,7 @@ class CLITests(unittest.TestCase):
             build_parser().parse_args(["--version"])
 
         self.assertEqual(exit_info.exception.code, 0)
-        self.assertIn("oss-careboard 0.5.0", output.getvalue())
+        self.assertIn("oss-careboard 0.6.0", output.getvalue())
 
     def test_accepts_repeatable_label_filters(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

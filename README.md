@@ -43,7 +43,7 @@ The comprehensive briefing summarizes:
 Requires Python 3.10 or newer.
 
 ```bash
-python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v0.5.0
+python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v0.6.0
 oss-careboard --repo owner/repository
 ```
 
@@ -91,6 +91,15 @@ The summary schema is versioned with `schema_version`. It separates analyzed
 counts from coverage completeness, includes pagination and rate-limit warnings,
 and keeps suggested actions structured for downstream tooling.
 
+Use a GitHub Enterprise Server API URL when needed:
+
+```bash
+oss-careboard --repo owner/repository --api-url https://github.example.com/api/v3
+```
+
+Enterprise compatibility is covered by offline fixtures for custom API base
+URLs, pagination, rate-limit headers, and repositories without a latest release.
+
 Render a saved snapshot again without making an API request:
 
 ```bash
@@ -118,7 +127,7 @@ jobs:
   careboard:
     runs-on: ubuntu-latest
     steps:
-      - uses: adefang512-cmyk/oss-careboard@main
+      - uses: adefang512-cmyk/oss-careboard@v0.6.0
         with:
           token: ${{ github.token }}
           stale-days: "30"
@@ -140,6 +149,8 @@ and large-repository workflow recipes.
 ```text
 --repo owner/name        Fetch a public GitHub repository
 --snapshot FILE          Render a previously saved JSON snapshot
+--token TOKEN            GitHub token; defaults to GITHUB_TOKEN
+--api-url URL            GitHub API base URL
 --stale-days DAYS        Attention threshold, default 30
 --limit COUNT            Items shown per queue, default 10
 --max-pages COUNT        GitHub API pages fetched per queue, default 10

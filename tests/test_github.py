@@ -1,8 +1,26 @@
 import unittest
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import Any
+from unittest.mock import patch
 
 from oss_careboard.github import GitHubClient, parse_next_link, validate_repository
+
+
+class FakeHTTPResponse(BytesIO):
+    def __init__(
+        self,
+        payload: bytes,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(payload)
+        self.headers = headers or {}
+
+    def __enter__(self) -> "FakeHTTPResponse":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()
 
 
 class StubGitHubClient(GitHubClient):
@@ -14,6 +32,29 @@ class StubGitHubClient(GitHubClient):
         self, url_or_path: str, allow_not_found: bool = False
     ) -> tuple[Any, str | None]:
         return next(self.responses)
+
+
+class ReleaseNotFoundGitHubClient(GitHubClient):
+    def _request(
+        self, url_or_path: str, allow_not_found: bool = False
+    ) -> tuple[Any, str | None]:
+        if url_or_path.endswith("/releases/latest"):
+            self.assert_release_not_found_allowed = allow_not_found
+            return None, None
+        if url_or_path.endswith("/issues?state=open&sort=updated&direction=asc&per_page=100"):
+            return [], None
+        if url_or_path.endswith("/pulls?state=open&sort=updated&direction=asc&per_page=100"):
+            return [], None
+        return {
+            "description": "Enterprise project",
+            "html_url": "https://github.example.com/acme/project",
+            "default_branch": "main",
+            "stargazers_count": 1,
+            "forks_count": 2,
+            "subscribers_count": 3,
+            "archived": False,
+            "pushed_at": "2026-06-05T00:00:00Z",
+        }, None
 
 
 class GitHubHelpersTests(unittest.TestCase):
@@ -77,6 +118,53 @@ class GitHubHelpersTests(unittest.TestCase):
             client.rate_limit_reset_at,
             datetime.fromtimestamp(reset, timezone.utc),
         )
+
+    def test_custom_enterprise_api_url_builds_expected_request(self) -> None:
+        captured = {}
+
+        def fake_urlopen(request: Any, timeout: int) -> FakeHTTPResponse:
+            captured["url"] = request.full_url
+            captured["authorization"] = request.get_header("Authorization")
+            captured["user_agent"] = request.get_header("User-agent")
+            captured["api_version"] = request.get_header("X-github-api-version")
+            captured["timeout"] = timeout
+            return FakeHTTPResponse(
+                b'{"ok": true}',
+                {
+                    "Link": "",
+                    "X-RateLimit-Remaining": "4999",
+                    "X-RateLimit-Reset": "1780588800",
+                },
+            )
+
+        client = GitHubClient(
+            token="test-token",
+            api_url="https://github.example.com/api/v3/",
+        )
+        with patch("oss_careboard.github.urlopen", fake_urlopen):
+            payload, _ = client._request("/repos/acme/project")
+
+        self.assertEqual(payload, {"ok": True})
+        self.assertEqual(
+            captured["url"],
+            "https://github.example.com/api/v3/repos/acme/project",
+        )
+        self.assertEqual(captured["authorization"], "Bearer test-token")
+        self.assertEqual(captured["user_agent"], "oss-careboard/0.6")
+        self.assertEqual(captured["api_version"], "2022-11-28")
+        self.assertEqual(captured["timeout"], 30)
+
+    def test_enterprise_snapshot_allows_missing_latest_release(self) -> None:
+        client = ReleaseNotFoundGitHubClient(
+            api_url="https://github.example.com/api/v3"
+        )
+
+        snapshot = client.fetch_snapshot("acme/project")
+
+        self.assertEqual(snapshot.repository, "acme/project")
+        self.assertEqual(snapshot.html_url, "https://github.example.com/acme/project")
+        self.assertIsNone(snapshot.latest_release_name)
+        self.assertTrue(client.assert_release_not_found_allowed)
 
 
 if __name__ == "__main__":

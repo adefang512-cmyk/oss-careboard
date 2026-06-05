@@ -7,7 +7,7 @@ thresholds and labels.
 ## Weekly general triage
 
 ```yaml
-- uses: adefang512-cmyk/oss-careboard@v0.5.0
+- uses: adefang512-cmyk/oss-careboard@v0.6.0
   with:
     token: ${{ github.token }}
     stale-days: "30"
@@ -17,7 +17,7 @@ thresholds and labels.
 ## Security-focused queue
 
 ```yaml
-- uses: adefang512-cmyk/oss-careboard@v0.5.0
+- uses: adefang512-cmyk/oss-careboard@v0.6.0
   with:
     token: ${{ github.token }}
     stale-days: "7"
@@ -28,7 +28,7 @@ thresholds and labels.
 ## Large repository
 
 ```yaml
-- uses: adefang512-cmyk/oss-careboard@v0.5.0
+- uses: adefang512-cmyk/oss-careboard@v0.6.0
   with:
     token: ${{ github.token }}
     max-pages: "25"
@@ -52,7 +52,7 @@ paid model API.
 ## Automation consumers
 
 ```yaml
-- uses: adefang512-cmyk/oss-careboard@v0.5.0
+- uses: adefang512-cmyk/oss-careboard@v0.6.0
   with:
     token: ${{ github.token }}
     summary-output: careboard-summary.json
@@ -62,3 +62,15 @@ The summary JSON includes a `schema_version`, analyzed counts, coverage
 completeness, priority items, and structured suggested actions. Treat incomplete
 coverage warnings as "at least this much work needs attention," not as complete
 repository totals.
+
+## GitHub Enterprise Server
+
+Use the enterprise API base URL with the CLI:
+
+```bash
+oss-careboard --repo owner/repository --api-url https://github.example.com/api/v3
+```
+
+The project tests custom API base URLs, pagination links, rate-limit headers,
+and repositories without a latest release using offline fixtures. Do not share
+private enterprise server URLs, tokens, or repository snapshots in public issues.

@@ -68,7 +68,7 @@ class GitHubClient:
         )
         headers = {
             "Accept": "application/vnd.github+json",
-            "User-Agent": "oss-careboard/0.5",
+            "User-Agent": "oss-careboard/0.6",
             "X-GitHub-Api-Version": "2022-11-28",
         }
         if self.token:
