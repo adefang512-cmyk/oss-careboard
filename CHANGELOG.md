@@ -4,6 +4,10 @@ All notable changes to OSS Careboard will be documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Marketplace readiness document with the compliant action-only publishing path.
+
 ## [0.6.0] - 2026-06-05
 
 ### Added

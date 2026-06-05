@@ -144,6 +144,9 @@ write to the target repository or call a paid service.
 See the [adoption guide](docs/ADOPTION.md) for general triage, security-focused,
 and large-repository workflow recipes.
 
+For GitHub Marketplace status and the compliant publishing path, see
+[Marketplace readiness](docs/MARKETPLACE.md).
+
 ## CLI reference
 
 ```text
