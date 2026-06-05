@@ -42,11 +42,18 @@ inputs:
     description: Markdown report path.
     required: false
     default: CAREBOARD.md
+  summary-output:
+    description: Optional machine-readable summary JSON path.
+    required: false
+    default: ""
 
 outputs:
   report:
     description: Path to the generated Markdown report.
     value: ${{ steps.generate.outputs.report }}
+  summary:
+    description: Path to the generated machine-readable summary, when requested.
+    value: ${{ steps.generate.outputs.summary }}
 
 runs:
   using: composite
@@ -70,6 +77,7 @@ runs:
         INPUT_INCLUDE_LABELS: ${{ inputs['include-labels'] }}
         INPUT_EXCLUDE_LABELS: ${{ inputs['exclude-labels'] }}
         INPUT_OUTPUT: ${{ inputs.output }}
+        INPUT_SUMMARY_OUTPUT: ${{ inputs['summary-output'] }}
       run: |
         repository="${INPUT_REPOSITORY:-$GITHUB_REPOSITORY}"
         args=(
@@ -88,6 +96,10 @@ runs:
         for label in "${exclude_labels[@]}"; do
           [[ -n "$label" ]] && args+=(--exclude-label "$label")
         done
+        if [[ -n "$INPUT_SUMMARY_OUTPUT" ]]; then
+          args+=(--summary-json "$INPUT_SUMMARY_OUTPUT")
+        fi
         oss-careboard "${args[@]}"
         cat "$INPUT_OUTPUT" >> "$GITHUB_STEP_SUMMARY"
         echo "report=$INPUT_OUTPUT" >> "$GITHUB_OUTPUT"
+        echo "summary=$INPUT_SUMMARY_OUTPUT" >> "$GITHUB_OUTPUT"

@@ -9,7 +9,7 @@ from pathlib import Path
 from . import __version__
 from .github import GitHubAPIError, GitHubClient
 from .models import snapshot_from_dict, snapshot_to_dict
-from .report import render_markdown
+from .report import build_summary, render_markdown
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,6 +54,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output", type=Path, help="Write Markdown to this path.")
     parser.add_argument("--json-output", type=Path, help="Write the raw snapshot to this path.")
+    parser.add_argument(
+        "--summary-json",
+        type=Path,
+        help="Write a machine-readable maintenance summary to this path.",
+    )
     return parser
 
 
@@ -95,6 +100,18 @@ def main(argv: list[str] | None = None) -> int:
             _write(
                 args.json_output,
                 json.dumps(snapshot_to_dict(snapshot), ensure_ascii=False, indent=2) + "\n",
+            )
+        if args.summary_json:
+            summary = build_summary(
+                snapshot,
+                stale_days=args.stale_days,
+                limit=args.limit,
+                include_labels=args.include_label,
+                exclude_labels=args.exclude_label,
+            )
+            _write(
+                args.summary_json,
+                json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
             )
         return 0
     except (GitHubAPIError, OSError, ValueError, json.JSONDecodeError) as error:

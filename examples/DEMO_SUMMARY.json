@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-04T12:00:00+00:00",
+  "repository": {
+    "full_name": "example/community-project",
+    "description": "A fictional public repository used to demonstrate OSS Careboard output.",
+    "html_url": "https://github.com/example/community-project",
+    "default_branch": "main",
+    "stars": 128,
+    "forks": 19,
+    "subscribers": 14,
+    "archived": false
+  },
+  "parameters": {
+    "stale_days": 30,
+    "limit": 10,
+    "include_labels": [],
+    "exclude_labels": []
+  },
+  "coverage": {
+    "issues_complete": true,
+    "pull_requests_complete": true,
+    "complete": true,
+    "warnings": [],
+    "rate_limit_remaining": 2400,
+    "rate_limit_reset_at": "2026-06-04T13:00:00+00:00"
+  },
+  "analyzed": {
+    "issues": 2,
+    "pull_requests": 1
+  },
+  "attention": {
+    "total": 2,
+    "issues": 1,
+    "pull_requests": 1,
+    "complete": true,
+    "oldest_item": {
+      "type": "pull_request",
+      "number": 48,
+      "title": "Add Windows setup notes",
+      "url": "https://github.com/example/community-project/pull/48",
+      "labels": [
+        "documentation",
+        "help wanted"
+      ],
+      "draft": true,
+      "idle_days": 104,
+      "age_days": 135
+    },
+    "top_label": {
+      "name": "documentation",
+      "count": 2
+    },
+    "stale_draft_pull_requests": 1
+  },
+  "release": {
+    "latest_name": "v1.4.0",
+    "latest_url": "https://github.com/example/community-project/releases/tag/v1.4.0",
+    "published_at": "2026-01-15T09:00:00+00:00",
+    "age_days": 140,
+    "last_push_age_days": 1
+  },
+  "priority_items": {
+    "pull_requests": [
+      {
+        "type": "pull_request",
+        "number": 48,
+        "title": "Add Windows setup notes",
+        "url": "https://github.com/example/community-project/pull/48",
+        "labels": [
+          "documentation",
+          "help wanted"
+        ],
+        "draft": true,
+        "idle_days": 104,
+        "age_days": 135
+      }
+    ],
+    "issues": [
+      {
+        "type": "issue",
+        "number": 42,
+        "title": "Clarify the contributor setup guide",
+        "url": "https://github.com/example/community-project/issues/42",
+        "labels": [
+          "documentation",
+          "help wanted"
+        ],
+        "draft": false,
+        "idle_days": 86,
+        "age_days": 123
+      }
+    ]
+  },
+  "suggested_actions": [
+    {
+      "type": "review_pull_request",
+      "item": {
+        "type": "pull_request",
+        "number": 48,
+        "title": "Add Windows setup notes",
+        "url": "https://github.com/example/community-project/pull/48",
+        "labels": [
+          "documentation",
+          "help wanted"
+        ],
+        "draft": true,
+        "idle_days": 104,
+        "age_days": 135
+      }
+    },
+    {
+      "type": "triage_issue",
+      "item": {
+        "type": "issue",
+        "number": 42,
+        "title": "Clarify the contributor setup guide",
+        "url": "https://github.com/example/community-project/issues/42",
+        "labels": [
+          "documentation",
+          "help wanted"
+        ],
+        "draft": false,
+        "idle_days": 86,
+        "age_days": 123
+      }
+    },
+    {
+      "type": "check_stale_draft_pull_requests",
+      "count": 1
+    },
+    {
+      "type": "batch_triage_label",
+      "label": "documentation",
+      "count": 2
+    },
+    {
+      "type": "consider_release"
+    }
+  ]
+}

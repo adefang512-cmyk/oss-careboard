@@ -4,6 +4,8 @@ All notable changes to OSS Careboard will be documented here.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-05
+
 ### Added
 
 - Adoption recipes for general triage, security-focused queues, and large
@@ -14,6 +16,13 @@ All notable changes to OSS Careboard will be documented here.
 - `python -m oss_careboard` module entry point and `--version` CLI flag.
 - Public adoption-report issue template for permissioned, verifiable usage
   evidence.
+- Machine-readable `--summary-json` output for automation consumers.
+- Optional `summary-output` GitHub Action input and `summary` Action output.
+- Example summary JSON artifact.
+
+### Changed
+
+- Adoption recipes now reference `v0.5.0`.
 
 ## [0.4.0] - 2026-06-04
 

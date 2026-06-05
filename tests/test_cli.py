@@ -45,7 +45,7 @@ class CLITests(unittest.TestCase):
             build_parser().parse_args(["--version"])
 
         self.assertEqual(exit_info.exception.code, 0)
-        self.assertIn("oss-careboard 0.4.0", output.getvalue())
+        self.assertIn("oss-careboard 0.5.0", output.getvalue())
 
     def test_accepts_repeatable_label_filters(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -67,6 +67,40 @@ class CLITests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertIn("include any of `bug`", output.getvalue())
         self.assertIn("exclude any of `wontfix`", output.getvalue())
+
+    def test_writes_summary_json(self) -> None:
+        snapshot = self._snapshot()
+        snapshot["issues"] = [
+            {
+                "number": 1,
+                "title": "Old bug",
+                "html_url": "https://github.com/example/project/issues/1",
+                "created_at": "2026-04-01T00:00:00Z",
+                "updated_at": "2026-04-01T00:00:00Z",
+                "labels": ["bug"],
+            }
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "snapshot.json"
+            summary_path = Path(directory) / "summary.json"
+            path.write_text(json.dumps(snapshot), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = main(
+                    [
+                        "--snapshot",
+                        str(path),
+                        "--summary-json",
+                        str(summary_path),
+                    ]
+                )
+
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(result, 0)
+        self.assertEqual(summary["schema_version"], "1.0")
+        self.assertEqual(summary["attention"]["issues"], 1)
+        self.assertEqual(summary["priority_items"]["issues"][0]["number"], 1)
 
     def test_rejects_invalid_max_pages(self) -> None:
         error = io.StringIO()

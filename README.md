@@ -43,7 +43,7 @@ The comprehensive briefing summarizes:
 Requires Python 3.10 or newer.
 
 ```bash
-python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v0.4.0
+python -m pip install git+https://github.com/adefang512-cmyk/oss-careboard.git@v0.5.0
 oss-careboard --repo owner/repository
 ```
 
@@ -81,6 +81,16 @@ export GITHUB_TOKEN=your_read_only_token
 oss-careboard --repo owner/repository --output CAREBOARD.md --json-output snapshot.json
 ```
 
+Write a stable machine-readable summary for automation consumers:
+
+```bash
+oss-careboard --repo owner/repository --summary-json careboard-summary.json
+```
+
+The summary schema is versioned with `schema_version`. It separates analyzed
+counts from coverage completeness, includes pagination and rate-limit warnings,
+and keeps suggested actions structured for downstream tooling.
+
 Render a saved snapshot again without making an API request:
 
 ```bash
@@ -116,6 +126,7 @@ jobs:
           language: en
           include-labels: "bug,security"
           exclude-labels: "duplicate,wontfix"
+          summary-output: careboard-summary.json
 ```
 
 The generated report is added to the workflow summary. The action does not
@@ -137,6 +148,7 @@ and large-repository workflow recipes.
 --exclude-label LABEL    Exclude a matching label; repeatable
 --output FILE            Write the Markdown report
 --json-output FILE       Save the fetched snapshot
+--summary-json FILE      Save a machine-readable maintenance summary
 ```
 
 Use either `--repo` or `--snapshot`, not both.
@@ -150,7 +162,8 @@ Use either `--repo` or `--snapshot`, not both.
   OpenAI or another model provider.
 - Snapshot JSON can contain issue and pull request titles. Review it before sharing.
 
-See the [example report](examples/DEMO_REPORT.md) to inspect the full output
+See the [example report](examples/DEMO_REPORT.md) and
+[example summary JSON](examples/DEMO_SUMMARY.json) to inspect the full output
 without installing the project or accessing a real repository.
 
 Already using OSS Careboard in a public repository? Share an

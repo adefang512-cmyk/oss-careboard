@@ -7,7 +7,7 @@ thresholds and labels.
 ## Weekly general triage
 
 ```yaml
-- uses: adefang512-cmyk/oss-careboard@v0.4.0
+- uses: adefang512-cmyk/oss-careboard@v0.5.0
   with:
     token: ${{ github.token }}
     stale-days: "30"
@@ -17,7 +17,7 @@ thresholds and labels.
 ## Security-focused queue
 
 ```yaml
-- uses: adefang512-cmyk/oss-careboard@v0.4.0
+- uses: adefang512-cmyk/oss-careboard@v0.5.0
   with:
     token: ${{ github.token }}
     stale-days: "7"
@@ -28,7 +28,7 @@ thresholds and labels.
 ## Large repository
 
 ```yaml
-- uses: adefang512-cmyk/oss-careboard@v0.4.0
+- uses: adefang512-cmyk/oss-careboard@v0.5.0
   with:
     token: ${{ github.token }}
     max-pages: "25"
@@ -48,3 +48,17 @@ marks incomplete coverage and warns when the remaining API allowance is low.
 
 OSS Careboard never posts comments, changes labels, closes work, or calls a
 paid model API.
+
+## Automation consumers
+
+```yaml
+- uses: adefang512-cmyk/oss-careboard@v0.5.0
+  with:
+    token: ${{ github.token }}
+    summary-output: careboard-summary.json
+```
+
+The summary JSON includes a `schema_version`, analyzed counts, coverage
+completeness, priority items, and structured suggested actions. Treat incomplete
+coverage warnings as "at least this much work needs attention," not as complete
+repository totals.

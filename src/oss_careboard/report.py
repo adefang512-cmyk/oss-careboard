@@ -201,6 +201,200 @@ def _quantity_text(
     return text[selected_key].format(**values)
 
 
+def _item_summary(item: WorkItem, now: datetime, kind: str) -> dict[str, object]:
+    return {
+        "type": kind,
+        "number": item.number,
+        "title": item.title,
+        "url": item.html_url,
+        "labels": list(item.labels),
+        "draft": item.draft,
+        "idle_days": item.idle_days(now),
+        "age_days": item.age_days(now),
+    }
+
+
+def _coverage_warnings(snapshot: RepoSnapshot) -> list[str]:
+    warnings = []
+    if not snapshot.issues_complete:
+        warnings.append("issues_page_limit_reached")
+    if not snapshot.pull_requests_complete:
+        warnings.append("pull_requests_page_limit_reached")
+    if snapshot.rate_limit_remaining is not None and snapshot.rate_limit_remaining <= 10:
+        warnings.append("github_rate_limit_low")
+    return warnings
+
+
+def _attention_items(
+    snapshot: RepoSnapshot,
+    stale_days: int,
+    include_labels: frozenset[str],
+    exclude_labels: frozenset[str],
+) -> tuple[list[WorkItem], list[WorkItem]]:
+    now = snapshot.fetched_at
+    stale_issues = sorted(
+        (
+            item
+            for item in snapshot.issues
+            if item.idle_days(now) >= stale_days
+            and _matches_labels(item, include_labels, exclude_labels)
+        ),
+        key=lambda item: item.updated_at,
+    )
+    stale_prs = sorted(
+        (
+            item
+            for item in snapshot.pull_requests
+            if item.idle_days(now) >= stale_days
+            and _matches_labels(item, include_labels, exclude_labels)
+        ),
+        key=lambda item: item.updated_at,
+    )
+    return stale_issues, stale_prs
+
+
+def build_summary(
+    snapshot: RepoSnapshot,
+    stale_days: int = 30,
+    limit: int = 10,
+    include_labels: Iterable[str] = (),
+    exclude_labels: Iterable[str] = (),
+) -> dict[str, object]:
+    if stale_days < 0:
+        raise ValueError("stale_days must be zero or greater")
+    if limit < 1:
+        raise ValueError("limit must be at least one")
+
+    now = snapshot.fetched_at
+    include_label_set = frozenset(
+        label.strip().casefold() for label in include_labels if label.strip()
+    )
+    exclude_label_set = frozenset(
+        label.strip().casefold() for label in exclude_labels if label.strip()
+    )
+    stale_issues, stale_prs = _attention_items(
+        snapshot, stale_days, include_label_set, exclude_label_set
+    )
+    attention_items = [*stale_prs, *stale_issues]
+    oldest = min(attention_items, key=lambda item: item.updated_at, default=None)
+    labels = Counter(label for item in attention_items for label in item.labels)
+    top_label = labels.most_common(1)[0] if labels else None
+    release_days = _days_since(snapshot.latest_release_published_at, now)
+    push_days = _days_since(snapshot.pushed_at, now)
+    draft_count = sum(item.draft for item in stale_prs)
+
+    actions: list[dict[str, object]] = []
+    if stale_prs:
+        actions.append(
+            {
+                "type": "review_pull_request",
+                "item": _item_summary(stale_prs[0], now, "pull_request"),
+            }
+        )
+    if stale_issues:
+        actions.append(
+            {
+                "type": "triage_issue",
+                "item": _item_summary(stale_issues[0], now, "issue"),
+            }
+        )
+    if draft_count:
+        actions.append(
+            {
+                "type": "check_stale_draft_pull_requests",
+                "count": draft_count,
+            }
+        )
+    if top_label and top_label[1] > 1:
+        actions.append(
+            {
+                "type": "batch_triage_label",
+                "label": top_label[0],
+                "count": top_label[1],
+            }
+        )
+    if snapshot.latest_release_published_at is None or (
+        release_days is not None and release_days >= 90
+    ):
+        actions.append({"type": "consider_release"})
+    if not actions:
+        actions.append({"type": "keep_current_cadence"})
+
+    return {
+        "schema_version": "1.0",
+        "generated_at": now.isoformat(),
+        "repository": {
+            "full_name": snapshot.repository,
+            "description": snapshot.description,
+            "html_url": snapshot.html_url,
+            "default_branch": snapshot.default_branch,
+            "stars": snapshot.stars,
+            "forks": snapshot.forks,
+            "subscribers": snapshot.subscribers,
+            "archived": snapshot.archived,
+        },
+        "parameters": {
+            "stale_days": stale_days,
+            "limit": limit,
+            "include_labels": sorted(include_label_set),
+            "exclude_labels": sorted(exclude_label_set),
+        },
+        "coverage": {
+            "issues_complete": snapshot.issues_complete,
+            "pull_requests_complete": snapshot.pull_requests_complete,
+            "complete": snapshot.issues_complete and snapshot.pull_requests_complete,
+            "warnings": _coverage_warnings(snapshot),
+            "rate_limit_remaining": snapshot.rate_limit_remaining,
+            "rate_limit_reset_at": (
+                snapshot.rate_limit_reset_at.isoformat()
+                if snapshot.rate_limit_reset_at
+                else None
+            ),
+        },
+        "analyzed": {
+            "issues": len(snapshot.issues),
+            "pull_requests": len(snapshot.pull_requests),
+        },
+        "attention": {
+            "total": len(attention_items),
+            "issues": len(stale_issues),
+            "pull_requests": len(stale_prs),
+            "complete": snapshot.issues_complete and snapshot.pull_requests_complete,
+            "oldest_item": (
+                _item_summary(
+                    oldest,
+                    now,
+                    "pull_request" if oldest in stale_prs else "issue",
+                )
+                if oldest
+                else None
+            ),
+            "top_label": (
+                {"name": top_label[0], "count": top_label[1]} if top_label else None
+            ),
+            "stale_draft_pull_requests": draft_count,
+        },
+        "release": {
+            "latest_name": snapshot.latest_release_name,
+            "latest_url": snapshot.latest_release_url,
+            "published_at": (
+                snapshot.latest_release_published_at.isoformat()
+                if snapshot.latest_release_published_at
+                else None
+            ),
+            "age_days": release_days,
+            "last_push_age_days": push_days,
+        },
+        "priority_items": {
+            "pull_requests": [
+                _item_summary(item, now, "pull_request") for item in stale_prs[:limit]
+            ],
+            "issues": [_item_summary(item, now, "issue") for item in stale_issues[:limit]],
+        },
+        "suggested_actions": actions,
+    }
+
+
 def _item_lines(
     items: Iterable[WorkItem], now: datetime, text: dict[str, str], limit: int
 ) -> list[str]:
@@ -360,23 +554,8 @@ def render_markdown(
     exclude_label_set = frozenset(
         label.strip().casefold() for label in exclude_labels if label.strip()
     )
-    stale_issues = sorted(
-        (
-            item
-            for item in snapshot.issues
-            if item.idle_days(now) >= stale_days
-            and _matches_labels(item, include_label_set, exclude_label_set)
-        ),
-        key=lambda item: item.updated_at,
-    )
-    stale_prs = sorted(
-        (
-            item
-            for item in snapshot.pull_requests
-            if item.idle_days(now) >= stale_days
-            and _matches_labels(item, include_label_set, exclude_label_set)
-        ),
-        key=lambda item: item.updated_at,
+    stale_issues, stale_prs = _attention_items(
+        snapshot, stale_days, include_label_set, exclude_label_set
     )
 
     release_days = _days_since(snapshot.latest_release_published_at, now)

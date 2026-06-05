@@ -3,7 +3,7 @@ from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 from oss_careboard.models import RepoSnapshot, WorkItem
-from oss_careboard.report import render_markdown
+from oss_careboard.report import build_summary, render_markdown
 
 
 def make_snapshot() -> RepoSnapshot:
@@ -55,6 +55,25 @@ def make_snapshot() -> RepoSnapshot:
 
 
 class ReportTests(unittest.TestCase):
+    def test_builds_machine_readable_summary(self) -> None:
+        summary = build_summary(
+            make_snapshot(),
+            stale_days=30,
+            limit=1,
+            include_labels=("documentation",),
+        )
+
+        self.assertEqual(summary["schema_version"], "1.0")
+        self.assertEqual(summary["repository"]["full_name"], "example/project")
+        self.assertEqual(summary["parameters"]["include_labels"], ["documentation"])
+        self.assertEqual(summary["coverage"]["complete"], True)
+        self.assertEqual(summary["analyzed"]["issues"], 2)
+        self.assertEqual(summary["attention"]["total"], 1)
+        self.assertEqual(summary["attention"]["top_label"]["name"], "documentation")
+        self.assertEqual(len(summary["priority_items"]["issues"]), 1)
+        self.assertEqual(summary["priority_items"]["pull_requests"], [])
+        self.assertEqual(summary["suggested_actions"][0]["type"], "triage_issue")
+
     def test_renders_comprehensive_maintainer_briefing(self) -> None:
         report = render_markdown(make_snapshot(), stale_days=30)
 
@@ -121,6 +140,11 @@ class ReportTests(unittest.TestCase):
         self.assertIn("Issue analysis reached the configured page limit", report)
         self.assertIn("Pull request analysis reached the configured page limit", report)
         self.assertIn("At least 2 analyzed items need attention", report)
+
+        summary = build_summary(snapshot)
+        self.assertEqual(summary["coverage"]["complete"], False)
+        self.assertIn("issues_page_limit_reached", summary["coverage"]["warnings"])
+        self.assertEqual(summary["attention"]["complete"], False)
 
     def test_warns_when_api_rate_limit_is_low(self) -> None:
         snapshot = make_snapshot()
